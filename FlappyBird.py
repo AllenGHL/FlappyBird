@@ -88,12 +88,20 @@ def main():
 	down_velocity = 0 		# 下降速度
 	head_direction = 0		# 鸟头方向
 	game_state	= RUNNING 	# 游戏状态
+	pipe_move_distance = SCREEN_WIDTH*4//3+pipe_down.get_width()#管子需要移动的距离
 	pipe_gap = 150 			# 管空隙大小
+	pipe2_gap = 150 			# 管2空隙大小
 	pipe_x_position = SCREEN_WIDTH 	# 柱子水平位置
 	pipe_down_position = 0	# 下柱子管口位置
+	pipe2_x_position = pipe_move_distance 	# 柱子水平位置
+	pipe2_up_position = 0
+	pipe2_down_position = 0	# 下柱子管口位置
 	score = 0				# 得分
 	ground_x_position = 0	# 地面水平位置
 	bird_actual_position = 0# 小鸟实际高度
+	# fisrt_fly_no_pipe 	= 90 # 开始一段没有柱子
+	
+
 
 
 	while 1:
@@ -110,26 +118,43 @@ def main():
 					# 小鸟落地后游戏才能重新开始 
 					if bird_actual_position == ground_position:
 						game_state = RUNNING
-					bird_position = int(0.2 * SCREEN_HEIGHT)
-					down_velocity = 0 	# 下降速度
-					head_direction = 0	# 鸟头方向
-					fps_count = 0		# 帧数处理
-					score = 0			# 得分
+						bird_position = int(0.2 * SCREEN_HEIGHT)
+						down_velocity = 0 	# 下降速度
+						head_direction = 0	# 鸟头方向
+						fps_count = 0		# 帧数处理
+						score = 0			# 得分
+						pipe_x_position = SCREEN_WIDTH 	# 柱子水平位置
+						pipe2_x_position = pipe_move_distance 	# 柱子水平位置
 
 						
-		# 帧数处理
-		fps_count += 1
+
 		# 刷新背景
 		SCREEN.blit(background_day, (0, 0))
-		if game_state == RUNNING: 		
-			# 柱子动起来
-			if pipe_x_position == SCREEN_WIDTH:
-				pipe_down_position	= random.randrange(int(0.3 * SCREEN_HEIGHT),int(0.7 * SCREEN_HEIGHT), 10)
-				pipe_gap	= random.randrange(80,151, 10)
-			pipe_up_position	= pipe_down_position - pipe_gap - pipe_up.get_height()
-			pipe_x_position		= SCREEN_WIDTH-1*((fps_count*4)%(pipe_down.get_width()+SCREEN_WIDTH))
-			SCREEN.blit(pipe_down, (pipe_x_position,pipe_down_position))
-			SCREEN.blit(pipe_up, (pipe_x_position,pipe_up_position))
+		if game_state == RUNNING:
+			# 帧数处理
+			fps_count += 1
+			# 游戏刚开始时候没有柱子空飞一段
+			# if fps_count*4 > SCREEN_WIDTH+pipe_down.get_width(): 
+			if 1:
+				# 柱子动起来
+				if pipe_x_position == SCREEN_WIDTH:
+					pipe_down_position	= random.randrange(int(0.3 * SCREEN_HEIGHT),int(0.7 * SCREEN_HEIGHT), 10)
+					pipe_gap	= random.randrange(100,151, 10)
+				pipe_up_position	= pipe_down_position - pipe_gap - pipe_up.get_height()
+				pipe_x_position		= SCREEN_WIDTH-(fps_count*4)%pipe_move_distance
+				SCREEN.blit(pipe_down, (pipe_x_position,pipe_down_position))
+				SCREEN.blit(pipe_up, (pipe_x_position,pipe_up_position))
+			if fps_count*4 > pipe_move_distance//2:
+
+				# 柱子2动起来
+				if pipe2_x_position == pipe_move_distance:
+					pipe2_down_position	= random.randrange(int(0.3 * SCREEN_HEIGHT),int(0.7 * SCREEN_HEIGHT), 10)
+					pipe2_gap	= random.randrange(100,151, 10)
+				pipe2_up_position	= pipe2_down_position - pipe2_gap - pipe_up.get_height()
+				pipe2_x_position	= pipe_move_distance-pipe_down.get_width()-(fps_count*4-pipe_move_distance//3)%pipe_move_distance
+				SCREEN.blit(pipe_down, (pipe2_x_position,pipe2_down_position))
+				SCREEN.blit(pipe_up, (pipe2_x_position,pipe2_up_position))
+
 			# 草地动起来
 			ground_x_position = -1*((fps_count*4)%(ground.get_width()-SCREEN_WIDTH))
 			SCREEN.blit(ground, (ground_x_position,int(0.8 * SCREEN_HEIGHT)))
@@ -175,9 +200,19 @@ def main():
 					game_state = GAMEOVER
 					sound_hit.play()
 					sound_die.play()
+			# 小鸟水平位置在柱子2管水平宽度内
+			if bird_x_position+bird[0].get_width() > pipe2_x_position and \
+				bird_x_position < pipe2_x_position+pipe_down.get_width():
+				# 小鸟高度比下管道低或比上管道高
+				if bird_actual_position+bird[0].get_height() > pipe2_down_position or \
+					bird_actual_position < pipe2_down_position - pipe2_gap:
+					game_state = GAMEOVER
+					sound_hit.play()
+					sound_die.play()
 
 			# 小鸟飞过管道后壁刷新得分
-			if abs(bird_x_position - (pipe_x_position+pipe_down.get_width() ) ) < 3:
+			if abs(bird_x_position - (pipe_x_position+pipe_down.get_width() ) ) < 3 or\
+				abs(bird_x_position - (pipe2_x_position+pipe_down.get_width() ) ) < 3:
 				sound_point.play()
 				score += 1
 			showScore(score)
@@ -188,6 +223,8 @@ def main():
 			bird_head = pygame.transform.rotate(bird[wing_position], -90)
 			SCREEN.blit(pipe_down, (pipe_x_position,pipe_down_position))
 			SCREEN.blit(pipe_up, (pipe_x_position,pipe_up_position))
+			SCREEN.blit(pipe_down, (pipe2_x_position,pipe2_down_position))
+			SCREEN.blit(pipe_up, (pipe2_x_position,pipe2_up_position))
 			SCREEN.blit(ground, (ground_x_position,int(0.8 * SCREEN_HEIGHT)))
 			bird_actual_position += 10
 			bird_actual_position = min(ground_position, bird_actual_position)
