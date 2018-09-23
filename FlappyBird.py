@@ -39,6 +39,8 @@ number = [
 ]
 # 地面图
 ground = pygame.image.load('assets/sprites/base.png').convert_alpha()
+# 开场动画
+message = pygame.image.load('assets/sprites/message.png').convert_alpha()
 # 取柱子
 pipe_down = pygame.image.load('assets/sprites/pipe-green.png').convert_alpha()
 pipe_up = pygame.transform.rotate(pipe_down, 180)
@@ -51,6 +53,9 @@ sound_wing 	= pygame.mixer.Sound('assets/audio/wing'+soundExt)
 sound_hit 	= pygame.mixer.Sound('assets/audio/hit'+soundExt)
 sound_point = pygame.mixer.Sound('assets/audio/point'+soundExt)
 sound_die 	= pygame.mixer.Sound('assets/audio/die'+soundExt)
+# 取game over文本
+text_game_over = pygame.image.load('assets/sprites/text_game_over.png').convert_alpha()
+
 
 def showScore(score):
 	# 拆分数字
@@ -78,7 +83,7 @@ def main():
 	bird_shake_iter = cycle([0,1,2,3,4,3,2,1,0,-1,-2,-3,-4,-3,-2,-1])
 	bird_shake = 0
 	
-	bird_position = int(0.2 * SCREEN_HEIGHT)		# 小鸟起始高度
+	bird_position = int(0.5 * SCREEN_HEIGHT)		# 小鸟起始高度
 	bird_x_position = int(0.2*SCREEN_WIDTH)			# 小鸟水平位置
 	ground_position = int(0.8 * SCREEN_HEIGHT-bird[0].get_height()) # 地面高度
 	
@@ -87,7 +92,7 @@ def main():
 	gravity = 1 			# 重力大小
 	down_velocity = 0 		# 下降速度
 	head_direction = 0		# 鸟头方向
-	game_state	= RUNNING 	# 游戏状态
+	game_state	= ANIMATION 	# 游戏状态
 	pipe_move_distance = SCREEN_WIDTH*4//3+pipe_down.get_width()#管子需要移动的距离
 	pipe_gap = 150 			# 管空隙大小
 	pipe2_gap = 150 			# 管2空隙大小
@@ -111,25 +116,43 @@ def main():
 				pygame.quit()
 				sys.exit()
 			if event.type == KEYDOWN and event.key == K_SPACE:
+				if game_state == ANIMATION:
+					game_state = RUNNING
+					down_velocity = 0 	# 下降速度
+					head_direction = 0	# 鸟头方向
+					fps_count = 0		# 帧数处理
+					score = 0			# 得分
+					pipe_x_position = SCREEN_WIDTH 	# 柱子水平位置
+					pipe2_x_position = pipe_move_distance 	# 柱子水平位置
+					
 				if game_state == RUNNING:
 					key_down = 6
 					sound_wing.play()
 				if game_state == GAMEOVER:
 					# 小鸟落地后游戏才能重新开始 
 					if bird_actual_position == ground_position:
-						game_state = RUNNING
-						bird_position = int(0.2 * SCREEN_HEIGHT)
-						down_velocity = 0 	# 下降速度
-						head_direction = 0	# 鸟头方向
-						fps_count = 0		# 帧数处理
-						score = 0			# 得分
-						pipe_x_position = SCREEN_WIDTH 	# 柱子水平位置
-						pipe2_x_position = pipe_move_distance 	# 柱子水平位置
+						game_state = ANIMATION
+						bird_position = int(0.5 * SCREEN_HEIGHT)		# 小鸟起始高度
+
 
 						
 
 		# 刷新背景
 		SCREEN.blit(background_day, (0, 0))
+		if game_state == ANIMATION:
+			fps_count += 1
+			SCREEN.blit(message,(SCREEN_WIDTH/2-message.get_width()/2, 0.1* SCREEN_HEIGHT))
+			# 草地动起来
+			ground_x_position = -1*((fps_count*4)%(ground.get_width()-SCREEN_WIDTH))
+			SCREEN.blit(ground, (ground_x_position,int(0.8 * SCREEN_HEIGHT)))
+			# 更新翅膀位置，比帧数放慢5倍
+			if fps_count % 5 == 0:
+				wing_position = next(wing_position_iter)
+			# 小鸟上下抖动 
+			bird_shake = next(bird_shake_iter)
+			# 小鸟动起来
+			bird_actual_position = bird_position+bird_shake
+			SCREEN.blit(bird[wing_position], (bird_x_position, bird_actual_position))			
 		if game_state == RUNNING:
 			# 帧数处理
 			fps_count += 1
@@ -229,7 +252,10 @@ def main():
 			bird_actual_position += 10
 			bird_actual_position = min(ground_position, bird_actual_position)
 			SCREEN.blit(bird_head, (bird_x_position, bird_actual_position))
-
+			showScore(score)
+			# 小鸟落地后游戏才能重新开始 
+			if bird_actual_position == ground_position:
+				SCREEN.blit(text_game_over, (SCREEN_WIDTH/2-text_game_over.get_width()/2, 0.4*SCREEN_HEIGHT))
 
 		# 图片刷新
 		pygame.display.update()
