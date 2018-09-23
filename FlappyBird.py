@@ -13,7 +13,7 @@ RUNNING		= 1
 GAMEOVER	= 2
 
 pygame.init()
-pygame.display.set_caption("Flappy Bird by Allen")
+pygame.display.set_caption("Flappy Bird by GHL")
 #设置游戏对话框尺寸
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 #取背景图,抠掉边缘转换
@@ -44,6 +44,8 @@ message = pygame.image.load('assets/sprites/message.png').convert_alpha()
 # 取柱子
 pipe_down = pygame.image.load('assets/sprites/pipe-green.png').convert_alpha()
 pipe_up = pygame.transform.rotate(pipe_down, 180)
+# 取logo
+logo = pygame.image.load('assets/sprites/logo.png').convert_alpha()
 # 取声音
 if "win" in sys.platform:
 	soundExt = ".wav"
@@ -139,6 +141,12 @@ def main():
 
 		# 刷新背景
 		SCREEN.blit(background_day, (0, 0))
+		# 重绘logo大小
+		logo_resize = pygame.transform.scale(logo,(25,25))
+		# 设置左上角icon
+		pygame.display.set_icon(logo_resize)
+
+
 		if game_state == ANIMATION:
 			fps_count += 1
 			SCREEN.blit(message,(SCREEN_WIDTH/2-message.get_width()/2, 0.1* SCREEN_HEIGHT))
@@ -256,7 +264,8 @@ def main():
 			# 小鸟落地后游戏才能重新开始 
 			if bird_actual_position == ground_position:
 				SCREEN.blit(text_game_over, (SCREEN_WIDTH/2-text_game_over.get_width()/2, 0.4*SCREEN_HEIGHT))
-
+		# 设置文中logo
+		SCREEN.blit(pygame.image.load('assets/sprites/ghl_white50.png').convert_alpha(), (SCREEN_WIDTH-50,SCREEN_HEIGHT-50))
 		# 图片刷新
 		pygame.display.update()
 		# 设置帧率30帧
