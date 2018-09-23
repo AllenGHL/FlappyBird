@@ -1,0 +1,2 @@
+FlappyBird.exe 是通过pyinstaller生成的可执行文件，可运行在无python环境的电脑上，exe需要和assets文件夹放在一起
+有python环境的电脑可直接运行py源码
